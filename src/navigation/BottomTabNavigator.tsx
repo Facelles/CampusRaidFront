@@ -3,8 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import ForumScreen from '../screens/ForumScreen';
 import BossRaidScreen from '../screens/BossRaidScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
-import ShopScreen from '../screens/ShopScreen';
 import MessagesScreen from '../screens/MessagesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import FriendsScreen from '../screens/FriendsScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,10 +27,12 @@ export default function BottomTabNavigator() {
             iconName = focused ? 'skull' : 'skull-outline';
           } else if (route.name === 'Leaderboard') {
             iconName = focused ? 'trophy' : 'trophy-outline';
-          } else if (route.name === 'Shop') {
-            iconName = focused ? 'cart' : 'cart-outline';
+          } else if (route.name === 'Friends') {
+            iconName = focused ? 'people' : 'people-outline';
           } else if (route.name === 'Messages') {
             iconName = focused ? 'mail' : 'mail-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -38,8 +41,9 @@ export default function BottomTabNavigator() {
       <Tab.Screen name="Forum" component={ForumScreen} />
       <Tab.Screen name="Boss Raid" component={BossRaidScreen} />
       <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-      <Tab.Screen name="Shop" component={ShopScreen} />
+      <Tab.Screen name="Friends" component={FriendsScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }

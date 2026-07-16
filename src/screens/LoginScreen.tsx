@@ -1,154 +1,117 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ImageBackground, ScrollView } from 'react-native';
-import apiClient from '../api/client';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../store/useAuthStore';
-import { Ionicons } from '@expo/vector-icons';
+import apiClient from '../api/client';
 
 export default function LoginScreen({ navigation }: any) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [universityName, setUniversityName] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { user, setUser } = useAuthStore();
-
-  useEffect(() => {
-    // If already authenticated and persistence restored, redirect
-    if (user) {
-      navigation.replace('Main');
-    }
-  }, [user, navigation]);
+  const { setUser } = useAuthStore();
 
   const handleAuth = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
-      return;
-    }
-    
-    if (!isLogin && (!name || !universityName)) {
-      Alert.alert('Error', 'Please enter name and university');
+    if (!email || !password || (!isLogin && !name)) {
+      Alert.alert('Error', 'Please fill all fields');
       return;
     }
 
     setLoading(true);
     try {
-      if (isLogin) {
-        const response = await apiClient.post('/auth/login', { 
-          email: email.trim(), 
-          password 
-        });
-        setUser(response.data);
-        navigation.replace('Main');
-      } else {
-        const response = await apiClient.post('/auth/register', { 
-          email: email.trim(), 
-          password,
-          name: name.trim(), 
-          universityName: universityName.trim() 
-        });
-        setUser(response.data);
-        navigation.replace('Main');
-      }
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const payload = isLogin ? { email, password } : { email, password, name };
+      
+      const res = await apiClient.post(endpoint, payload);
+      
+      await AsyncStorage.setItem('token', res.data.token);
+      setUser(res.data.user);
+      
+      // Navigate to Main (BottomTabNavigator)
+      navigation.replace('Main');
     } catch (error: any) {
-      Alert.alert('Connection Failed', error?.response?.data?.error || 'Server error');
+      Alert.alert('Authentication Failed', error.response?.data?.error || 'Unknown error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ImageBackground 
-      source={require('../../assets/monsters_bg.jpg')} 
-      resizeMode="repeat" 
-      className="flex-1"
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      className="flex-1 bg-black"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View className="flex-1 items-center justify-center bg-zinc-950/85 px-6 py-12">
-          <Text className="text-5xl font-bold text-green-500 mb-2 tracking-widest text-center" style={{ textShadowColor: '#22c55e', textShadowRadius: 10 }}>CAMPUS RAID</Text>
-          <Text className="text-zinc-300 text-lg mb-8 text-center font-bold">Establish secure connection</Text>
+      <LinearGradient
+        colors={['#1e1b4b', '#000000']}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+      />
+      
+      <View className="flex-1 justify-center p-6 relative z-10">
+        <View className="absolute w-72 h-72 bg-purple-600/20 rounded-full blur-3xl -top-10 -left-10" />
+        <View className="absolute w-72 h-72 bg-indigo-600/20 rounded-full blur-3xl bottom-10 -right-10" />
+
+        <View className="mb-10 items-center">
+          <Text className="text-5xl font-black text-white tracking-tighter mb-2" style={{ textShadowColor: '#c084fc', textShadowRadius: 10 }}>CAMPUS</Text>
+          <Text className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-500 tracking-widest uppercase">Raid</Text>
+        </View>
+
+        <BlurView tint="dark" intensity={70} className="p-6 rounded-3xl border border-white/10 overflow-hidden">
+          <Text className="text-white text-2xl font-bold mb-6">{isLogin ? 'Welcome Back' : 'Create Account'}</Text>
           
-          {/* Tabs */}
-          <View className="flex-row w-full mb-6 bg-zinc-900/80 rounded-lg p-1 border border-zinc-700/50">
-            <TouchableOpacity 
-              className={`flex-1 p-3 rounded-md items-center ${isLogin ? 'bg-green-600/90' : ''}`}
-              onPress={() => setIsLogin(true)}
-            >
-              <Text className={`font-bold ${isLogin ? 'text-white' : 'text-zinc-400'}`}>LOGIN</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              className={`flex-1 p-3 rounded-md items-center ${!isLogin ? 'bg-green-600/90' : ''}`}
-              onPress={() => setIsLogin(false)}
-            >
-              <Text className={`font-bold ${!isLogin ? 'text-white' : 'text-zinc-400'}`}>REGISTER</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="w-full space-y-4 mb-8">
-            <View>
-              <Text className="text-green-400 mb-1 ml-1 uppercase text-xs font-bold mt-2">Contact Email</Text>
-              <TextInput
-                className="w-full bg-zinc-900/80 text-green-400 p-4 rounded-lg border border-green-900/50"
-                placeholder="neo@matrix.com"
-                placeholderTextColor="#52525b"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
-            </View>
-
-            <View>
-              <Text className="text-green-400 mb-1 ml-1 uppercase text-xs font-bold mt-4">Password</Text>
-              <TextInput
-                className="w-full bg-zinc-900/80 text-green-400 p-4 rounded-lg border border-green-900/50"
-                placeholder="********"
-                placeholderTextColor="#52525b"
-                secureTextEntry={true}
-                value={password}
-                onChangeText={setPassword}
-              />
-            </View>
-
-            {!isLogin && (
-              <>
-                <View>
-                  <Text className="text-green-400 mb-1 ml-1 uppercase text-xs font-bold mt-4">Operator Name</Text>
-                  <TextInput
-                    className="w-full bg-zinc-900/80 text-green-400 p-4 rounded-lg border border-green-900/50"
-                    placeholder="Neo"
-                    placeholderTextColor="#52525b"
-                    value={name}
-                    onChangeText={setName}
-                  />
-                </View>
-
-                <View>
-                  <Text className="text-green-400 mb-1 ml-1 uppercase text-xs font-bold mt-4">University Faction</Text>
-                  <TextInput
-                    className="w-full bg-zinc-900/80 text-green-400 p-4 rounded-lg border border-green-900/50"
-                    placeholder="e.g. KNU, KPI, LNU"
-                    placeholderTextColor="#52525b"
-                    value={universityName}
-                    onChangeText={setUniversityName}
-                  />
-                </View>
-              </>
-            )}
-          </View>
+          {!isLogin && (
+            <TextInput
+              className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-4 font-medium"
+              placeholder="Full Name"
+              placeholderTextColor="#a1a1aa"
+              value={name}
+              onChangeText={setName}
+            />
+          )}
+          
+          <TextInput
+            className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-4 font-medium"
+            placeholder="Email"
+            placeholderTextColor="#a1a1aa"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+          
+          <TextInput
+            className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-6 font-medium"
+            placeholder="Password"
+            placeholderTextColor="#a1a1aa"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
 
           <TouchableOpacity 
-            className={`w-full p-4 rounded-lg items-center border border-green-500/50 ${loading ? 'bg-green-900/80' : 'bg-green-600/90'}`}
+            className="bg-purple-600 p-4 rounded-full items-center shadow-lg shadow-purple-600/30"
             onPress={handleAuth}
             disabled={loading}
           >
-            <Text className="text-zinc-50 font-bold text-lg uppercase tracking-wider">
-              {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white font-bold text-lg">{isLogin ? 'Sign In' : 'Sign Up'}</Text>
+            )}
           </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </ImageBackground>
+
+          <View className="flex-row justify-center mt-6">
+            <Text className="text-zinc-400 font-medium">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+            </Text>
+            <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+              <Text className="text-purple-400 font-bold">{isLogin ? 'Sign Up' : 'Sign In'}</Text>
+            </TouchableOpacity>
+          </View>
+        </BlurView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -1,23 +1,58 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, ImageBackground, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Animated } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
+import * as Haptics from 'expo-haptics';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function BossRaidScreen() {
   const [boss, setBoss] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedBlocks, setSelectedBlocks] = useState<any[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
+  const universityId = (user as any)?.universityId || (user as any)?.university?.id;
+
+  const hpAnim = React.useRef(new Animated.Value(100)).current;
+  const shakeAnim = React.useRef(new Animated.Value(0)).current;
+
+  const hpBarStyle = {
+    width: hpAnim.interpolate({
+      inputRange: [0, 100],
+      outputRange: ['0%', '100%']
+    }),
+  };
+
+  const bossAnimatedStyle = {
+    transform: [{ translateX: shakeAnim }],
+  };
 
   const fetchBoss = async () => {
     try {
+      if (!universityId) return;
       setLoading(true);
-      const res = await apiClient.get('/boss/active');
+      const res = await apiClient.get(`/boss/active?universityId=${universityId}`);
       setBoss(res.data);
       setSelectedBlocks([]);
-    } catch (error) {
-      console.error(error);
+      
+      if (res.data?.id) {
+        Animated.timing(hpAnim, {
+          toValue: (res.data.currentHp / res.data.maxHp) * 100,
+          duration: 300,
+          useNativeDriver: false,
+        }).start();
+        const lbRes = await apiClient.get(`/leaderboard/boss/${res.data.id}`);
+        setLeaderboard(lbRes.data);
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+         setBoss(null);
+      } else {
+         console.error(error);
+      }
     } finally {
       setLoading(false);
     }
@@ -25,9 +60,19 @@ export default function BossRaidScreen() {
 
   useEffect(() => {
     fetchBoss();
-  }, []);
+  }, [universityId]);
+
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true })
+    ]).start();
+  };
 
   const handleBlockSelect = (block: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const puzzle = boss?.puzzles?.[0];
     if (puzzle?.type === 'MULTIPLE_CHOICE') {
       setSelectedBlocks([block]);
@@ -39,11 +84,13 @@ export default function BossRaidScreen() {
   };
 
   const handleBlockRemove = (block: any) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSelectedBlocks(selectedBlocks.filter(b => b.id !== block.id));
   };
 
   const handleAttack = async () => {
     if (!boss || !boss.puzzles || boss.puzzles.length === 0) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const puzzle = boss.puzzles[0];
     const blockIds = selectedBlocks.map(b => b.id);
     
@@ -55,15 +102,18 @@ export default function BossRaidScreen() {
       });
       
       if (res.data.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        triggerShake();
         Alert.alert('CRITICAL HIT!', res.data.message);
-        // Optimistic update of user stats
+        
         if (user) {
           setUser({ ...user, xp: user.xp + 50, coins: user.coins + 10 });
         }
-        fetchBoss(); // refresh boss state
+        fetchBoss();
       } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert('ATTACK FAILED', res.data.message);
-        setSelectedBlocks([]); // reset selection
+        setSelectedBlocks([]);
       }
     } catch (error: any) {
       Alert.alert('ERROR', error?.response?.data?.message || 'Attack request failed');
@@ -72,7 +122,7 @@ export default function BossRaidScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 items-center justify-center bg-zinc-950">
+      <View className="flex-1 items-center justify-center bg-black">
         <ActivityIndicator size="large" color="#ef4444" />
       </View>
     );
@@ -80,59 +130,75 @@ export default function BossRaidScreen() {
 
   if (!boss) {
     return (
-      <View className="flex-1 items-center justify-center bg-zinc-950">
-        <Text className="text-zinc-400">No active threats detected.</Text>
+      <View className="flex-1 items-center justify-center bg-black">
+        <Ionicons name="shield-checkmark" size={60} color="#22c55e" className="mb-4" />
+        <Text className="text-zinc-400 text-lg font-bold">No active threats detected.</Text>
       </View>
     );
   }
 
   const puzzle = boss.puzzles?.[0];
-  const hpPercentage = (boss.currentHp / boss.maxHp) * 100;
 
   return (
-    <ImageBackground 
-      source={require('../../assets/monsters_bg.jpg')} 
-      resizeMode="repeat" 
-      className="flex-1"
-    >
-      <ScrollView className="flex-1 bg-zinc-950/85 p-4">
-        <View className="items-center mb-6 mt-4">
-          <Text className="text-3xl font-bold text-red-500 mb-2 uppercase text-center" style={{ textShadowColor: '#ef4444', textShadowRadius: 10 }}>{boss.name}</Text>
-          
-          {boss.imageUrl && (
-            <Image 
-              source={{ uri: `https://campusraidbackend-1.onrender.com${boss.imageUrl}` }} 
-              className="w-full aspect-square border-4 border-red-900/80 mb-4 shadow-xl"
-              resizeMode="cover"
-            />
-          )}
+    <View className="flex-1 bg-black">
+      <LinearGradient
+        colors={['#1e1b4b', '#000000']}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+      />
+      
+      <View className="px-4 pt-12 pb-4 flex-row justify-between items-end z-10">
+        <View>
+          <Text className="text-3xl font-black text-white tracking-tight mb-1">Boss Raid</Text>
+          <Text className="text-purple-300 text-sm font-medium">{boss?.university?.name || 'Your University'}</Text>
+        </View>
+        <View className="bg-white/10 px-3 py-1.5 rounded-full border border-white/5">
+           <Text className="text-white font-bold text-xs uppercase">{boss.status}</Text>
+        </View>
+      </View>
 
-          <View className="w-full h-4 bg-zinc-900/80 rounded-full overflow-hidden mb-2 border border-red-900/80 shadow-lg">
-            <View 
-              className="h-full bg-red-500"
-              style={{ width: `${Math.max(0, hpPercentage)}%` }}
-            />
-          </View>
-          <Text className="text-zinc-300 font-bold text-xs">HP: {boss.currentHp} / {boss.maxHp}</Text>
+      <ScrollView className="flex-1 px-4 z-10" showsVerticalScrollIndicator={false}>
+        <View className="items-center mt-4 mb-8 relative">
+          <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
+          <Animated.View style={bossAnimatedStyle} className="items-center">
+            <View className="w-56 h-56 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
+              <Text style={{ fontSize: 100 }}>👾</Text>
+            </View>
+            <Text className="text-white font-black text-2xl tracking-widest uppercase text-center" style={{ textShadowColor: '#a855f7', textShadowRadius: 10 }}>
+              {boss.name}
+            </Text>
+          </Animated.View>
         </View>
 
+        <BlurView tint="dark" intensity={60} className="w-full h-8 bg-black/40 rounded-full overflow-hidden mb-2 border border-white/10 relative">
+          <Animated.View 
+            className="h-full bg-red-600 absolute left-0 top-0 bottom-0"
+            style={hpBarStyle}
+          />
+          <View className="absolute inset-0 items-center justify-center">
+            <Text className="text-white font-black text-xs">
+              {boss.currentHp} / {boss.maxHp} HP
+            </Text>
+          </View>
+        </BlurView>
+
         {puzzle && (
-          <View className="bg-zinc-900/80 p-4 rounded-lg border border-red-500/50 mb-6 shadow-xl">
-            <Text className="text-red-400 font-bold mb-2 uppercase text-lg" style={{ textShadowColor: '#ef4444', textShadowRadius: 3 }}>{puzzle.title}</Text>
-            <Text className="text-zinc-200 text-sm mb-4 font-medium">{puzzle.description}</Text>
+          <BlurView tint="dark" intensity={50} className="p-5 rounded-3xl border border-white/10 mb-6 overflow-hidden">
+            <Text className="text-purple-300 font-bold mb-2 text-lg">{puzzle.title}</Text>
+            <Text className="text-zinc-300 text-sm mb-6 leading-relaxed">{puzzle.description}</Text>
+            
             {puzzle.type === 'MULTIPLE_CHOICE' ? (
               <>
-                <Text className="text-zinc-400 text-xs mb-2 uppercase font-bold">Select one answer:</Text>
-                <View className="flex-col gap-2 mb-6">
+                <Text className="text-white/50 text-xs mb-3 uppercase tracking-wider font-bold">Select one answer</Text>
+                <View className="flex-col gap-3 mb-6">
                   {puzzle.blocks.map((b: any) => {
                     const isSelected = selectedBlocks.find(sb => sb.id === b.id);
                     return (
                       <TouchableOpacity 
                         key={b.id} 
                         onPress={() => handleBlockSelect(b)}
-                        className={`p-3 rounded border w-full ${isSelected ? 'bg-red-900/60 border-red-500/50' : 'bg-zinc-800/80 border-zinc-600/50'}`}
+                        className={`p-4 rounded-xl border ${isSelected ? 'bg-purple-600/40 border-purple-400/50' : 'bg-black/40 border-white/10'}`}
                       >
-                        <Text className="text-zinc-200 font-mono text-xs font-bold">{b.text}</Text>
+                        <Text className="text-zinc-200 font-mono text-xs">{b.text}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -140,26 +206,26 @@ export default function BossRaidScreen() {
               </>
             ) : (
               <>
-                <Text className="text-zinc-400 text-xs mb-2 uppercase font-bold">Your Sequence (Tap to remove):</Text>
-                <View className="min-h-[60px] bg-zinc-950/90 p-3 rounded-lg border border-zinc-700/50 mb-4 flex-row flex-wrap gap-2">
+                <Text className="text-white/50 text-xs mb-3 uppercase tracking-wider font-bold">Your Sequence</Text>
+                <View className="min-h-[60px] bg-black/40 p-4 rounded-xl border border-white/10 flex-row flex-wrap gap-2 mb-6">
                   {selectedBlocks.map((b, idx) => (
                     <TouchableOpacity 
                       key={`selected-${b.id}`} 
                       onPress={() => handleBlockRemove(b)}
-                      className="bg-red-900/60 p-2 rounded border border-red-500/50"
+                      className="bg-purple-600/40 p-2 rounded-lg border border-purple-400/50"
                     >
-                      <Text className="text-red-100 font-mono text-xs font-bold">
+                      <Text className="text-white font-mono text-xs">
                         {idx + 1}. {b.text.trim()}
                       </Text>
                     </TouchableOpacity>
                   ))}
                   {selectedBlocks.length === 0 && (
-                    <Text className="text-zinc-500 text-xs italic font-bold">Sequence empty...</Text>
+                    <Text className="text-white/40 text-xs italic">Tap blocks below to arrange...</Text>
                   )}
                 </View>
 
-                <Text className="text-zinc-400 text-xs mb-2 uppercase font-bold">Available Blocks (Tap to add):</Text>
-                <View className="flex-row flex-wrap gap-2 mb-6">
+                <Text className="text-white/50 text-xs mb-3 uppercase tracking-wider font-bold">Available Blocks</Text>
+                <View className="flex-row flex-wrap gap-3 mb-6">
                   {puzzle.blocks.map((b: any) => {
                     const isSelected = selectedBlocks.find(sb => sb.id === b.id);
                     if (isSelected) return null;
@@ -167,9 +233,9 @@ export default function BossRaidScreen() {
                       <TouchableOpacity 
                         key={b.id} 
                         onPress={() => handleBlockSelect(b)}
-                        className="bg-zinc-800/80 p-2 rounded border border-zinc-600/50 w-full"
+                        className="bg-black/30 p-3 rounded-lg border border-white/5 w-full"
                       >
-                        <Text className="text-zinc-200 font-mono text-xs font-bold">{b.text}</Text>
+                        <Text className="text-zinc-300 font-mono text-xs">{b.text}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -178,21 +244,49 @@ export default function BossRaidScreen() {
             )}
 
             <TouchableOpacity 
-              className={`p-4 rounded-lg items-center border ${
+              className={`p-4 rounded-xl items-center ${
                 (puzzle.type === 'MULTIPLE_CHOICE' ? selectedBlocks.length === 1 : selectedBlocks.length === puzzle.blocks.length)
-                  ? 'bg-red-600/90 border-red-400/50' 
-                  : 'bg-red-900/40 border-red-900/50'
+                  ? 'bg-purple-600' 
+                  : 'bg-white/10'
               }`}
               onPress={handleAttack}
               disabled={puzzle.type === 'MULTIPLE_CHOICE' ? selectedBlocks.length !== 1 : selectedBlocks.length !== puzzle.blocks.length}
             >
-              <Text className="text-white font-bold uppercase tracking-widest text-lg">
+              <Text className={`${(puzzle.type === 'MULTIPLE_CHOICE' ? selectedBlocks.length === 1 : selectedBlocks.length === puzzle.blocks.length) ? 'text-white' : 'text-white/30'} font-bold uppercase tracking-widest`}>
                 Execute Attack
               </Text>
             </TouchableOpacity>
-          </View>
+          </BlurView>
         )}
+
+        {puzzle && (
+        <BlurView tint="dark" intensity={50} className="p-5 rounded-3xl border border-white/10 mb-10 overflow-hidden">
+          <View className="flex-row items-center mb-4">
+            <Ionicons name="trophy" size={20} color="#c084fc" className="mr-2" />
+            <Text className="text-white font-black text-lg">Top Raiders</Text>
+          </View>
+          
+          {leaderboard.length === 0 ? (
+            <Text className="text-white/40 text-center py-4 font-medium">No damage dealt yet.</Text>
+          ) : (
+            leaderboard.map((item, index) => (
+              <View key={item.userId} className="flex-row justify-between items-center py-3 border-b border-white/5">
+                <View className="flex-row items-center">
+                  <Text className={`w-6 font-black ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-zinc-300' : index === 2 ? 'text-amber-600' : 'text-zinc-500'}`}>
+                    #{index + 1}
+                  </Text>
+                  <View className="ml-2 flex-row items-center">
+                    <Text className="text-white font-bold">{item.user.name}</Text>
+                  </View>
+                </View>
+                <Text className="text-purple-400 font-black">{item._sum.damage} DMG</Text>
+              </View>
+            ))
+          )}
+        </BlurView>
+        )}
+        
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }

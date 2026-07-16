@@ -3,6 +3,8 @@ import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, A
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ForumScreen({ navigation }: any) {
   const [posts, setPosts] = useState<any[]>([]);
@@ -68,121 +70,151 @@ export default function ForumScreen({ navigation }: any) {
     }
   };
 
-  const startChat = (author: any) => {
+  const handleUserClick = async (author: any) => {
     if (author.id === user?.id) {
-      Alert.alert('Error', 'You cannot chat with yourself.');
+      Alert.alert('Error', 'You cannot add yourself.');
       return;
     }
-    navigation.navigate('ChatRoom', { partnerId: author.id, partnerName: author.name });
+    
+    // Optimistic: just send a friend request
+    try {
+      await apiClient.post('/friends/request', {
+        user1Id: user?.id,
+        user2Id: author.id
+      });
+      Alert.alert('Success', `Friend request sent to ${author.name}!`);
+    } catch (error: any) {
+      if (error?.response?.data?.error?.includes('вже')) {
+        // Already requested or friends. Just go to chat
+        navigation.navigate('ChatRoom', { partnerId: author.id, partnerName: author.name });
+      } else {
+        Alert.alert('Error', error?.response?.data?.error || 'Failed to send request');
+      }
+    }
   };
 
   const renderItem = ({ item }: { item: any }) => {
     const score = (item.upvotes || 0) - (item.downvotes || 0);
     
     return (
-      <View className="bg-zinc-900/80 p-4 rounded-lg mb-4 border border-green-900/50 flex-row">
-        {/* Voting Sidebar */}
-        <View className="items-center justify-start mr-3">
-          <TouchableOpacity onPress={() => handleVote(item.id, 'UPVOTE')} className="p-1">
-            <Ionicons name="arrow-up-circle-outline" size={28} color="#4ade80" />
-          </TouchableOpacity>
-          <Text className={`font-bold my-1 ${score > 0 ? 'text-green-400' : score < 0 ? 'text-red-400' : 'text-zinc-400'}`}>
-            {score}
-          </Text>
-          <TouchableOpacity onPress={() => handleVote(item.id, 'DOWNVOTE')} className="p-1">
-            <Ionicons name="arrow-down-circle-outline" size={28} color="#f87171" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        <View className="flex-1">
-          <Text className="text-green-400 font-bold text-lg mb-1">{item.title}</Text>
-          <Text className="text-zinc-300 mb-3 text-sm">{item.content}</Text>
-          <View className="flex-row justify-between items-center mt-auto">
-            <TouchableOpacity 
-              className="flex-row items-center bg-green-900/30 px-2 py-1 rounded border border-green-500/30"
-              onPress={() => startChat(item.user)}
-            >
-              <Ionicons name="person-circle-outline" size={16} color="#4ade80" />
-              <Text className="text-green-400 text-xs font-bold ml-1">{item.user?.name}</Text>
+      <TouchableOpacity 
+        onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
+        className="mb-4 rounded-2xl overflow-hidden"
+      >
+        <BlurView tint="dark" intensity={40} className="p-4 border border-white/10 flex-row">
+          {/* Voting Sidebar */}
+          <View className="items-center justify-start mr-3">
+            <TouchableOpacity onPress={() => handleVote(item.id, 'UPVOTE')} className="p-1">
+              <Ionicons name="caret-up" size={24} color={score > 0 ? '#a855f7' : '#a1a1aa'} />
             </TouchableOpacity>
-            
-            <View className="flex-row items-center">
-              <Ionicons name="chatbubble-outline" size={14} color="#4ade80" />
-              <Text className="text-green-500/80 text-xs ml-1 font-bold">{item._count?.comments || 0}</Text>
+            <Text className={`font-black my-1 text-xs ${score > 0 ? 'text-purple-400' : score < 0 ? 'text-red-400' : 'text-zinc-300'}`}>
+              {score}
+            </Text>
+            <TouchableOpacity onPress={() => handleVote(item.id, 'DOWNVOTE')} className="p-1">
+              <Ionicons name="caret-down" size={24} color={score < 0 ? '#f87171' : '#a1a1aa'} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <View className="flex-1">
+            <Text className="text-white font-black text-lg mb-1 tracking-tight">{item.title}</Text>
+            <Text className="text-zinc-300/80 mb-3 text-sm leading-5">{item.content}</Text>
+            <View className="flex-row justify-between items-center mt-auto">
+              <View className="flex-row items-center bg-white/5 px-2 py-1 rounded-full border border-white/10">
+                <Ionicons name="person" size={12} color="#a855f7" />
+                <Text className="text-purple-300/90 text-xs font-bold ml-1">{item.user?.name}</Text>
+              </View>
+              <TouchableOpacity onPress={() => handleUserClick(item.user)} className="flex-row items-center ml-3 bg-white/10 px-2 py-1 rounded-full">
+                <Ionicons name="person-add" size={12} color="#fff" className="mr-1" />
+                <Text className="text-white text-[10px] font-bold ml-1 uppercase">Connect</Text>
+              </TouchableOpacity>
+              
+              <View className="flex-row items-center ml-3">
+                <Ionicons name="chatbubble" size={14} color="#a1a1aa" className="mr-1" />
+                <Text className="text-zinc-400 text-xs font-bold ml-1">{item._count?.comments || 0}</Text>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
+        </BlurView>
+      </TouchableOpacity>
     );
   };
 
   return (
-    <ImageBackground 
-      source={require('../../assets/monsters_bg.jpg')} 
-      resizeMode="repeat" 
-      className="flex-1"
-    >
-      <View className="flex-1 bg-zinc-950/85 p-4">
-        <View className="flex-row justify-between items-center mb-6 mt-4">
-          <Text className="text-2xl font-bold text-green-500" style={{ textShadowColor: '#22c55e', textShadowRadius: 5 }}>CAMPUS THREADS</Text>
-          
-          <View className="flex-row">
-            <TouchableOpacity 
-              className="bg-green-600/90 px-4 py-2 rounded-lg border border-green-400/50 mr-2"
-              onPress={() => setIsCreating(!isCreating)}
-            >
-              <Text className="text-white font-bold uppercase text-xs">{isCreating ? 'Cancel' : 'New Post'}</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              className="bg-red-900/60 px-3 py-2 rounded-lg border border-red-500/50 items-center justify-center"
-              onPress={handleLogout}
-            >
-              <Ionicons name="log-out-outline" size={16} color="#fca5a5" />
-            </TouchableOpacity>
-          </View>
+    <View className="flex-1 bg-black">
+      <LinearGradient
+        colors={['#1e1b4b', '#000000']}
+        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
+      />
+      <View className="px-4 pt-12 pb-4 flex-row justify-between items-end">
+        <View>
+            <Text className="text-3xl font-black text-white tracking-tight mb-1">Campus Forum</Text>
+            <Text className="text-purple-300 text-sm font-medium">Discuss with your peers</Text>
         </View>
+        <TouchableOpacity onPress={handleLogout} className="bg-white/10 p-2 rounded-full">
+            <Ionicons name="log-out-outline" size={20} color="#fca5a5" />
+        </TouchableOpacity>
+      </View>
+      
+      {loading ? (
+        <ActivityIndicator size="large" color="#a855f7" className="mt-10" />
+      ) : (
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={false}
+          className="flex-1"
+        />
+      )}
 
-        {isCreating && (
-          <View className="bg-zinc-900/90 p-4 rounded-lg mb-6 border border-green-500/50">
+      {isCreating && (
+        <View className="absolute inset-0 bg-black/60 justify-end p-4 z-50">
+          <BlurView tint="dark" intensity={70} className="rounded-3xl p-6 border border-white/10 overflow-hidden">
+            <Text className="text-white font-bold text-xl mb-4">Create Discussion</Text>
+            
             <TextInput
-              className="bg-zinc-950/80 text-green-400 p-3 rounded-lg mb-3 border border-green-900/50"
-              placeholder="Post Title"
-              placeholderTextColor="#52525b"
+              className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-3 font-medium"
+              placeholder="Title"
+              placeholderTextColor="#a1a1aa"
               value={newTitle}
               onChangeText={setNewTitle}
             />
+            
             <TextInput
-              className="bg-zinc-950/80 text-green-400 p-3 rounded-lg mb-3 border border-green-900/50"
-              placeholder="What's on your mind?..."
-              placeholderTextColor="#52525b"
-              multiline
-              numberOfLines={4}
+              className="bg-black/40 text-white p-4 rounded-xl border border-white/5 h-32 mb-6 font-medium"
+              placeholder="What's on your mind?"
+              placeholderTextColor="#a1a1aa"
               value={newContent}
               onChangeText={setNewContent}
+              multiline
+              textAlignVertical="top"
             />
-            <TouchableOpacity 
-              className="bg-green-600/90 p-3 rounded-lg items-center border border-green-400/50"
-              onPress={handleCreatePost}
-            >
-              <Text className="text-white font-bold uppercase">Submit Post</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+            
+            <View className="flex-row justify-end">
+              <TouchableOpacity 
+                onPress={() => setIsCreating(false)}
+                className="px-6 py-3 mr-3 rounded-full bg-white/10"
+              >
+                <Text className="text-white font-bold">Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={handleCreatePost}
+                className="px-6 py-3 rounded-full bg-purple-600"
+              >
+                <Text className="text-white font-bold">Post</Text>
+              </TouchableOpacity>
+            </View>
+          </BlurView>
+        </View>
+      )}
 
-        {loading ? (
-          <ActivityIndicator size="large" color="#22c55e" />
-        ) : (
-          <FlatList
-            data={posts}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={<Text className="text-zinc-500 text-center mt-10 font-bold">No threads found.</Text>}
-          />
-        )}
-      </View>
-    </ImageBackground>
+      <TouchableOpacity 
+        onPress={() => setIsCreating(true)}
+        className="absolute bottom-6 right-6 w-14 h-14 bg-purple-600 rounded-full items-center justify-center shadow-lg border border-purple-400/30"
+      >
+        <Ionicons name="add" size={32} color="#fff" />
+      </TouchableOpacity>
+    </View>
   );
 }
