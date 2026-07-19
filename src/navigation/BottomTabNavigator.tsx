@@ -8,12 +8,14 @@ import FriendsScreen from '../screens/FriendsScreen';
 import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabNavigator() {
   const user = useAuthStore((state) => state.user);
   const [unreadCount, setUnreadCount] = useState(0);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const fetchUnread = async () => {
@@ -35,7 +37,13 @@ export default function BottomTabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: { backgroundColor: '#000000', borderTopColor: '#3b0764' },
+        tabBarStyle: { 
+          backgroundColor: '#000000', 
+          borderTopColor: '#3b0764',
+          height: 55 + Math.max(insets.bottom, 10),
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: 8
+        },
         tabBarActiveTintColor: '#c084fc',
         tabBarInactiveTintColor: '#52525b',
         tabBarIcon: ({ focused, color, size }) => {

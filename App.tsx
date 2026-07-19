@@ -2,6 +2,7 @@ import "./global.css";
 import { useEffect } from 'react';
 import { Platform, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import InstallPromptWeb from './src/components/InstallPromptWeb';
 import DesktopNotSupported from './src/components/DesktopNotSupported';
@@ -40,18 +41,18 @@ export default function App() {
 
   if (isDesktop) {
     return (
-      <>
+      <SafeAreaProvider>
         <DesktopNotSupported />
         <StatusBar style="light" />
-      </>
+      </SafeAreaProvider>
     );
   }
 
   return (
-    <>
+    <SafeAreaProvider>
       <AppNavigator />
       <InstallPromptWeb />
       <StatusBar style="light" />
-    </>
+    </SafeAreaProvider>
   );
 }
