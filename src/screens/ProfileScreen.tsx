@@ -65,7 +65,15 @@ export default function ProfileScreen({ navigation }: any) {
           ) : (
             <Text className="text-3xl font-black text-white tracking-tight">{user?.name || 'Student'}</Text>
           )}
-          <Text className="text-purple-300 font-medium">{user?.email}</Text>
+          
+          {user?.titles && user.titles.length > 0 && (
+            <View className="bg-amber-500/20 px-3 py-1 mt-2 rounded-full border border-amber-500/50 flex-row items-center">
+              <Ionicons name="medal" size={14} color="#fbbf24" />
+              <Text className="text-amber-400 font-bold ml-1 text-sm">{user.titles[0]}</Text>
+            </View>
+          )}
+
+          <Text className="text-purple-300 font-medium mt-2">{user?.email}</Text>
         </View>
 
         <BlurView tint="dark" intensity={50} className="p-2 rounded-3xl border border-white/10 mb-8 overflow-hidden">
