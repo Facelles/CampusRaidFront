@@ -44,7 +44,7 @@ export default function BottomTabNavigator() {
         tabBarStyle: { 
           backgroundColor: '#000000', 
           borderTopColor: '#3b0764',
-          position: isWeb ? 'fixed' : 'absolute',
+          position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
