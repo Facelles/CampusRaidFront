@@ -39,7 +39,15 @@ export default function BottomTabNavigator() {
         headerShown: false,
         tabBarStyle: { 
           backgroundColor: '#000000', 
-          borderTopColor: '#3b0764'
+          borderTopColor: '#3b0764',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          elevation: 0,
+          height: 65 + Math.max(insets.bottom, 10),
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: 10,
         },
         tabBarActiveTintColor: '#c084fc',
         tabBarInactiveTintColor: '#52525b',

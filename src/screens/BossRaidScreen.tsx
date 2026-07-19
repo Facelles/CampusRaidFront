@@ -178,7 +178,11 @@ export default function BossRaidScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-4 z-10" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 px-4 z-10" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
         <View className="items-center mt-2 mb-8 relative w-full">
           <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
           <View className="w-full items-center">
@@ -211,45 +215,48 @@ export default function BossRaidScreen() {
             <Text className="text-zinc-300 text-sm mb-6 leading-relaxed">{puzzle.description}</Text>
             
             {puzzle.type === 'MULTIPLE_CHOICE' ? (
-              <>
-                <Text className="text-white/50 text-xs mb-3 uppercase tracking-wider font-bold">Select one answer</Text>
-                <View className="flex-col gap-3 mb-6">
-                  {puzzle.blocks.map((b: any) => {
-                    const isSelected = selectedBlocks.find(sb => sb.id === b.id);
-                    return (
-                      <TouchableOpacity 
-                        key={b.id} 
-                        onPress={() => handleBlockSelect(b)}
-                        className={`p-4 rounded-xl border ${isSelected ? 'bg-purple-600/40 border-purple-400/50' : 'bg-black/40 border-white/10'}`}
-                      >
-                        <Text className="text-zinc-200 font-mono text-xs">{b.text}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </>
-            ) : (
-              <>
-                <Text className="text-white/50 text-xs mb-3 uppercase tracking-wider font-bold">Your Sequence</Text>
-                <View className="min-h-[60px] bg-black/40 p-4 rounded-xl border border-white/10 flex-row flex-wrap gap-2 mb-6">
-                  {selectedBlocks.map((b, idx) => (
+              <View className="mb-8 w-full max-w-full">
+                <Text className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-2">Available Blocks</Text>
+                {puzzle.blocks.map((block: any) => {
+                  const isSelected = selectedBlocks.find(b => b.id === block.id);
+                  return (
                     <TouchableOpacity 
-                      key={`selected-${b.id}`} 
-                      onPress={() => handleBlockRemove(b)}
-                      className="bg-purple-600/40 p-2 rounded-lg border border-purple-400/50"
+                      key={block.id} 
+                      onPress={() => handleBlockSelect(block)}
+                      className={`p-4 rounded-xl mb-3 border-2 w-full overflow-hidden ${isSelected ? 'bg-purple-900/50 border-purple-500' : 'bg-white/5 border-white/10'}`}
                     >
-                      <Text className="text-white font-mono text-xs">
-                        {idx + 1}. {b.text.trim()}
+                      <Text className="text-zinc-300 font-mono text-sm leading-relaxed" style={{ flexShrink: 1, flexWrap: 'wrap' }}>
+                        {block.text}
                       </Text>
                     </TouchableOpacity>
-                  ))}
-                  {selectedBlocks.length === 0 && (
+                  );
+                })}
+              </View>
+            ) : (
+              <View className="mb-8 w-full max-w-full">
+                <Text className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-2">Your Sequence</Text>
+                <View className="min-h-[100px] w-full max-w-full overflow-hidden bg-purple-900/30 border-2 border-purple-500/50 rounded-2xl p-4 justify-center shadow-lg shadow-purple-900/50">
+                  {selectedBlocks.length > 0 ? (
+                    <View className="flex-col w-full">
+                      {selectedBlocks.map((block, idx) => (
+                        <TouchableOpacity 
+                          key={block.id} 
+                          onPress={() => handleBlockRemove(block)}
+                          className="bg-white/5 rounded-lg p-3 w-full mb-2 overflow-hidden"
+                        >
+                          <Text className="text-purple-100 font-mono text-sm leading-relaxed" style={{ flexShrink: 1, flexWrap: 'wrap' }}>
+                            {idx + 1}. {block.text}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
                     <Text className="text-white/40 text-xs italic">Tap blocks below to arrange...</Text>
                   )}
                 </View>
 
-                <Text className="text-white/50 text-xs mb-3 uppercase tracking-wider font-bold">Available Blocks</Text>
-                <View className="flex-row flex-wrap gap-3 mb-6">
+                <Text className="text-white/50 text-xs mt-6 mb-3 uppercase tracking-wider font-bold">Available Blocks</Text>
+                <View className="flex-row flex-wrap gap-3">
                   {puzzle.blocks.map((b: any) => {
                     const isSelected = selectedBlocks.find(sb => sb.id === b.id);
                     if (isSelected) return null;
