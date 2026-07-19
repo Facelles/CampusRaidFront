@@ -13,7 +13,7 @@ export default function AppNavigator() {
   useNotifications();
 
   return (
-    <NavigationContainer>
+    <NavigationContainer documentTitle={{ formatter: () => 'CampusRaid' }}>
       <Stack.Navigator
         initialRouteName="Login"
         screenOptions={{ headerShown: false }}
