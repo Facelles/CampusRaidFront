@@ -11,11 +11,12 @@ export default function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [universityName, setUniversityName] = useState('');
   const [loading, setLoading] = useState(false);
   const { setUser } = useAuthStore();
 
   const handleAuth = async () => {
-    if (!email || !password || (!isLogin && !name)) {
+    if (!email || !password || (!isLogin && (!name || !universityName))) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
@@ -23,12 +24,11 @@ export default function LoginScreen({ navigation }: any) {
     setLoading(true);
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
-      const payload = isLogin ? { email, password } : { email, password, name };
+      const payload = isLogin ? { email, password } : { email, password, name, universityName };
       
       const res = await apiClient.post(endpoint, payload);
       
-      await AsyncStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
+      setUser(res.data);
       
       // Navigate to Main (BottomTabNavigator)
       navigation.replace('Main');
@@ -62,13 +62,22 @@ export default function LoginScreen({ navigation }: any) {
           <Text className="text-white text-2xl font-bold mb-6">{isLogin ? 'Welcome Back' : 'Create Account'}</Text>
           
           {!isLogin && (
-            <TextInput
-              className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-4 font-medium"
-              placeholder="Full Name"
-              placeholderTextColor="#a1a1aa"
-              value={name}
-              onChangeText={setName}
-            />
+            <>
+              <TextInput
+                className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-4 font-medium"
+                placeholder="Full Name"
+                placeholderTextColor="#a1a1aa"
+                value={name}
+                onChangeText={setName}
+              />
+              <TextInput
+                className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-4 font-medium"
+                placeholder="University Name (e.g. KNU)"
+                placeholderTextColor="#a1a1aa"
+                value={universityName}
+                onChangeText={setUniversityName}
+              />
+            </>
           )}
           
           <TextInput

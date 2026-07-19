@@ -118,7 +118,7 @@ export default function LeaderboardScreen() {
       ) : (
         <FlatList
           data={tab === 'USERS' ? users : universities}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id || item.universityId || String(index)}
           renderItem={tab === 'USERS' ? renderUser : renderUniversity}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
           showsVerticalScrollIndicator={false}

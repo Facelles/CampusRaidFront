@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
-import apiClient from '../api/client';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import apiClient from '../api/client';
+import { getVIPType } from '../utils/vip';
+import AnimatedVIPText from '../components/AnimatedVIPText';
 
 export default function ProfileScreen({ navigation }: any) {
   const { user, setUser, logout } = useAuthStore();
@@ -40,8 +42,9 @@ export default function ProfileScreen({ navigation }: any) {
       });
       setUser(res.data); // Update user in Zustand
       setModalVisible(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      Alert.alert('Error', err.response?.data?.error || 'Failed to update university');
     }
   };
 
@@ -57,7 +60,11 @@ export default function ProfileScreen({ navigation }: any) {
           <View className="w-24 h-24 rounded-full bg-purple-900/30 border-2 border-purple-500/50 items-center justify-center mb-4">
             <Ionicons name="person" size={48} color="#c084fc" />
           </View>
-          <Text className="text-3xl font-black text-white tracking-tight">{user?.name || 'Student'}</Text>
+          {getVIPType(user?.titles) ? (
+            <AnimatedVIPText text={user?.name || 'Student'} type={getVIPType(user?.titles)!} style={{ fontSize: 30, fontWeight: '900', color: '#fff' }} />
+          ) : (
+            <Text className="text-3xl font-black text-white tracking-tight">{user?.name || 'Student'}</Text>
+          )}
           <Text className="text-purple-300 font-medium">{user?.email}</Text>
         </View>
 
@@ -76,7 +83,13 @@ export default function ProfileScreen({ navigation }: any) {
               <Ionicons name="cash" size={20} color="#3b82f6" className="mr-3" />
               <Text className="text-zinc-200 font-bold ml-3">Coins</Text>
             </View>
-            <Text className="text-blue-400 font-black text-lg">{user?.coins || 0}</Text>
+            <View className="flex-row items-center">
+              <Text className="text-blue-400 font-black text-lg mr-4">{user?.coins || 0}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Shop')} className="bg-purple-600 px-3 py-1.5 rounded-full flex-row items-center">
+                <Ionicons name="cart" size={14} color="#fff" />
+                <Text className="text-white font-bold ml-1 text-xs">SHOP</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           
           <View className="flex-row justify-between items-center py-4 px-4">

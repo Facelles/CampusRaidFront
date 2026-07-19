@@ -17,7 +17,7 @@ export default function MessagesScreen({ navigation }: any) {
       let isActive = true;
       const fetchChats = async () => {
         try {
-          const res = await apiClient.get('/chat/my');
+          const res = await apiClient.get('/chat/my', { params: { userId: user?.id } });
           if (isActive) setChats(res.data);
         } catch (error) {
           console.error(error);
@@ -34,7 +34,7 @@ export default function MessagesScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity 
-      onPress={() => navigation.navigate('ChatRoom', { partnerId: item.partner.id, partnerName: item.partner.name })}
+      onPress={() => navigation.navigate('ChatRoom', { partnerId: item.id, partnerName: item.name })}
       className="mb-3 rounded-2xl overflow-hidden"
     >
       <BlurView tint="dark" intensity={50} className="p-4 border border-white/10 flex-row items-center">
@@ -43,15 +43,22 @@ export default function MessagesScreen({ navigation }: any) {
         </View>
         <View className="flex-1">
           <View className="flex-row justify-between items-center mb-1">
-            <Text className="text-white font-bold text-base">{item.partner.name}</Text>
-            {item.partner.titles?.length > 0 && (
-              <View className="bg-white/10 px-2 py-0.5 rounded border border-white/5">
-                <Text className="text-purple-300 text-[10px] font-bold uppercase">{item.partner.titles[0]}</Text>
+            <View className="flex-row items-center">
+              <Text className={`text-white text-base ${item.unreadCount > 0 ? 'font-black' : 'font-bold'}`}>{item.name}</Text>
+              {item.titles?.length > 0 && (
+                <View className="bg-white/10 px-2 py-0.5 rounded border border-white/5 ml-2">
+                  <Text className="text-purple-300 text-[10px] font-bold uppercase">{item.titles[0]}</Text>
+                </View>
+              )}
+            </View>
+            {item.unreadCount > 0 && (
+              <View className="bg-red-500 rounded-full w-5 h-5 items-center justify-center">
+                <Text className="text-white text-xs font-bold">{item.unreadCount}</Text>
               </View>
             )}
           </View>
-          <Text className="text-zinc-400 text-sm" numberOfLines={1}>
-            {item.lastMessage.content}
+          <Text className={`${item.unreadCount > 0 ? 'text-zinc-200 font-bold' : 'text-zinc-400 text-sm'}`} numberOfLines={1}>
+            {item.lastMessage}
           </Text>
         </View>
       </BlurView>
@@ -74,7 +81,7 @@ export default function MessagesScreen({ navigation }: any) {
       ) : (
         <FlatList
           data={chats}
-          keyExtractor={(item) => item.partner.id}
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
           ListEmptyComponent={

@@ -18,6 +18,7 @@ export default function BossRaidScreen() {
 
   const hpAnim = React.useRef(new Animated.Value(100)).current;
   const shakeAnim = React.useRef(new Animated.Value(0)).current;
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const hpBarStyle = {
     width: hpAnim.interpolate({
@@ -27,7 +28,10 @@ export default function BossRaidScreen() {
   };
 
   const bossAnimatedStyle = {
-    transform: [{ translateX: shakeAnim }],
+    transform: [
+      { translateX: shakeAnim },
+      { scale: scaleAnim }
+    ],
   };
 
   const fetchBoss = async () => {
@@ -38,12 +42,16 @@ export default function BossRaidScreen() {
       setBoss(res.data);
       setSelectedBlocks([]);
       
-      if (res.data?.id) {
+      // Update HP bar
+      if (res.data) {
         Animated.timing(hpAnim, {
           toValue: (res.data.currentHp / res.data.maxHp) * 100,
-          duration: 300,
-          useNativeDriver: false,
+          duration: 500,
+          useNativeDriver: false
         }).start();
+      }
+
+      if (res.data?.id) {
         const lbRes = await apiClient.get(`/leaderboard/boss/${res.data.id}`);
         setLeaderboard(lbRes.data);
       }
@@ -64,10 +72,16 @@ export default function BossRaidScreen() {
 
   const triggerShake = () => {
     Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: -15, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 15, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true })
+    ]).start();
+
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.8, duration: 100, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true })
     ]).start();
   };
 
@@ -156,8 +170,24 @@ export default function BossRaidScreen() {
         </View>
       </View>
 
+      {/* Language Selector (MVP Placeholder) */}
+      <View className="px-4 mb-4 z-10">
+        <Text className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-2">Select Language</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+          {['JavaScript', 'Python', 'C++'].map((lang, idx) => (
+            <TouchableOpacity
+              key={lang}
+              onPress={() => Alert.alert('MVP Only', `${lang} support is unavailable in MVP. Currently defaulting to pseudo-code / JS.`)}
+              className={`mr-3 px-4 py-2 rounded-full border ${idx === 0 ? 'bg-purple-600/40 border-purple-400/50' : 'bg-white/5 border-white/10'}`}
+            >
+              <Text className={idx === 0 ? 'text-purple-100 font-bold' : 'text-zinc-400 font-medium'}>{lang}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
       <ScrollView className="flex-1 px-4 z-10" showsVerticalScrollIndicator={false}>
-        <View className="items-center mt-4 mb-8 relative">
+        <View className="items-center mt-2 mb-8 relative">
           <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
           <Animated.View style={bossAnimatedStyle} className="items-center">
             <View className="w-56 h-56 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
@@ -244,16 +274,12 @@ export default function BossRaidScreen() {
             )}
 
             <TouchableOpacity 
-              className={`p-4 rounded-xl items-center ${
-                (puzzle.type === 'MULTIPLE_CHOICE' ? selectedBlocks.length === 1 : selectedBlocks.length === puzzle.blocks.length)
-                  ? 'bg-purple-600' 
-                  : 'bg-white/10'
-              }`}
               onPress={handleAttack}
-              disabled={puzzle.type === 'MULTIPLE_CHOICE' ? selectedBlocks.length !== 1 : selectedBlocks.length !== puzzle.blocks.length}
+              disabled={selectedBlocks.length === 0}
+              className={`mt-4 p-4 rounded-xl items-center ${selectedBlocks.length === 0 ? 'bg-white/5 border border-white/5' : 'bg-green-600/80 border border-green-500/50'}`}
             >
-              <Text className={`${(puzzle.type === 'MULTIPLE_CHOICE' ? selectedBlocks.length === 1 : selectedBlocks.length === puzzle.blocks.length) ? 'text-white' : 'text-white/30'} font-bold uppercase tracking-widest`}>
-                Execute Attack
+              <Text className={`font-black tracking-widest ${selectedBlocks.length === 0 ? 'text-white/20' : 'text-white'}`}>
+                EXECUTE ATTACK
               </Text>
             </TouchableOpacity>
           </BlurView>

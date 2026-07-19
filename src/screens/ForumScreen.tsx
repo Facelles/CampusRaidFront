@@ -5,6 +5,9 @@ import { useAuthStore } from '../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getVIPType } from '../utils/vip';
+import AnimatedVIPText from '../components/AnimatedVIPText';
+import AnimatedVIPBorder from '../components/AnimatedVIPBorder';
 
 export default function ForumScreen({ navigation }: any) {
   const [posts, setPosts] = useState<any[]>([]);
@@ -95,47 +98,60 @@ export default function ForumScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: any }) => {
     const score = (item.upvotes || 0) - (item.downvotes || 0);
+    const vipType = getVIPType(item.user?.titles);
     
+    const content = (
+      <BlurView tint="dark" intensity={40} className={`p-4 border ${vipType ? 'border-transparent' : 'border-white/10'} flex-row`}>
+        {/* Voting Sidebar */}
+        <View className="items-center justify-start mr-3">
+          <TouchableOpacity onPress={() => handleVote(item.id, 'UPVOTE')} className="p-1">
+            <Ionicons name="caret-up" size={24} color={score > 0 ? '#a855f7' : '#a1a1aa'} />
+          </TouchableOpacity>
+          <Text className={`font-black my-1 text-xs ${score > 0 ? 'text-purple-400' : score < 0 ? 'text-red-400' : 'text-zinc-300'}`}>
+            {score}
+          </Text>
+          <TouchableOpacity onPress={() => handleVote(item.id, 'DOWNVOTE')} className="p-1">
+            <Ionicons name="caret-down" size={24} color={score < 0 ? '#f87171' : '#a1a1aa'} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Content */}
+        <View className="flex-1">
+          <Text className="text-white font-black text-lg mb-1 tracking-tight">{item.title}</Text>
+          <Text className="text-zinc-300/80 mb-3 text-sm leading-5">{item.content}</Text>
+          <View className="flex-row justify-between items-center mt-auto">
+            <View className="flex-row items-center bg-white/5 px-2 py-1 rounded-full border border-white/10">
+              <Ionicons name="person" size={12} color="#a855f7" />
+              {vipType ? (
+                <AnimatedVIPText text={item.user?.name} type={vipType} style={{ fontSize: 12, fontWeight: 'bold', marginLeft: 4, color: '#fff' }} />
+              ) : (
+                <Text className="text-purple-300/90 text-xs font-bold ml-1">{item.user?.name}</Text>
+              )}
+            </View>
+            <TouchableOpacity onPress={() => handleUserClick(item.user)} className="flex-row items-center ml-3 bg-white/10 px-2 py-1 rounded-full">
+              <Ionicons name="person-add" size={12} color="#fff" className="mr-1" />
+              <Text className="text-white text-[10px] font-bold ml-1 uppercase">Connect</Text>
+            </TouchableOpacity>
+            
+            <View className="flex-row items-center ml-3">
+              <Ionicons name="chatbubble" size={14} color="#a1a1aa" className="mr-1" />
+              <Text className="text-zinc-400 text-xs font-bold ml-1">{item._count?.comments || 0}</Text>
+            </View>
+          </View>
+        </View>
+      </BlurView>
+    );
+
     return (
       <TouchableOpacity 
         onPress={() => navigation.navigate('PostDetail', { postId: item.id })}
         className="mb-4 rounded-2xl overflow-hidden"
       >
-        <BlurView tint="dark" intensity={40} className="p-4 border border-white/10 flex-row">
-          {/* Voting Sidebar */}
-          <View className="items-center justify-start mr-3">
-            <TouchableOpacity onPress={() => handleVote(item.id, 'UPVOTE')} className="p-1">
-              <Ionicons name="caret-up" size={24} color={score > 0 ? '#a855f7' : '#a1a1aa'} />
-            </TouchableOpacity>
-            <Text className={`font-black my-1 text-xs ${score > 0 ? 'text-purple-400' : score < 0 ? 'text-red-400' : 'text-zinc-300'}`}>
-              {score}
-            </Text>
-            <TouchableOpacity onPress={() => handleVote(item.id, 'DOWNVOTE')} className="p-1">
-              <Ionicons name="caret-down" size={24} color={score < 0 ? '#f87171' : '#a1a1aa'} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Content */}
-          <View className="flex-1">
-            <Text className="text-white font-black text-lg mb-1 tracking-tight">{item.title}</Text>
-            <Text className="text-zinc-300/80 mb-3 text-sm leading-5">{item.content}</Text>
-            <View className="flex-row justify-between items-center mt-auto">
-              <View className="flex-row items-center bg-white/5 px-2 py-1 rounded-full border border-white/10">
-                <Ionicons name="person" size={12} color="#a855f7" />
-                <Text className="text-purple-300/90 text-xs font-bold ml-1">{item.user?.name}</Text>
-              </View>
-              <TouchableOpacity onPress={() => handleUserClick(item.user)} className="flex-row items-center ml-3 bg-white/10 px-2 py-1 rounded-full">
-                <Ionicons name="person-add" size={12} color="#fff" className="mr-1" />
-                <Text className="text-white text-[10px] font-bold ml-1 uppercase">Connect</Text>
-              </TouchableOpacity>
-              
-              <View className="flex-row items-center ml-3">
-                <Ionicons name="chatbubble" size={14} color="#a1a1aa" className="mr-1" />
-                <Text className="text-zinc-400 text-xs font-bold ml-1">{item._count?.comments || 0}</Text>
-              </View>
-            </View>
-          </View>
-        </BlurView>
+        {vipType ? (
+          <AnimatedVIPBorder type={vipType} borderRadius={16} borderWidth={2}>
+            {content}
+          </AnimatedVIPBorder>
+        ) : content}
       </TouchableOpacity>
     );
   };

@@ -5,10 +5,13 @@ import BottomTabNavigator from './BottomTabNavigator';
 import ChatRoomScreen from '../screens/ChatRoomScreen';
 import PostDetailScreen from '../screens/PostDetailScreen';
 import ShopScreen from '../screens/ShopScreen';
+import { useNotifications } from '../hooks/useNotifications';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
+  useNotifications();
+
   return (
     <NavigationContainer>
       <Stack.Navigator
