@@ -190,41 +190,69 @@ export default function ForumScreen({ navigation }: any) {
       )}
 
       {isCreating && (
-        <View className="absolute inset-0 bg-black/60 justify-end p-4 z-50">
-          <BlurView tint="dark" intensity={70} className="rounded-3xl p-6 border border-white/10 overflow-hidden">
-            <Text className="text-white font-bold text-xl mb-4">Create Discussion</Text>
-            
-            <TextInput
-              className="bg-black/40 text-white text-base p-4 rounded-xl border border-white/5 mb-3 font-medium"
-              placeholder="Title"
-              placeholderTextColor="#a1a1aa"
-              value={newTitle}
-              onChangeText={setNewTitle}
-            />
-            
-            <TextInput
-              className="bg-black/40 text-white text-base p-4 rounded-xl border border-white/5 h-32 mb-6 font-medium"
-              placeholder="What's on your mind?"
-              placeholderTextColor="#a1a1aa"
-              value={newContent}
-              onChangeText={setNewContent}
-              multiline
-              textAlignVertical="top"
-            />
-            
-            <View className="flex-row justify-end">
-              <TouchableOpacity 
-                onPress={() => setIsCreating(false)}
-                className="px-6 py-3 mr-3 rounded-full bg-white/10"
-              >
-                <Text className="text-white font-bold">Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={handleCreatePost}
-                className="px-6 py-3 rounded-full bg-purple-600"
-              >
-                <Text className="text-white font-bold">Post</Text>
-              </TouchableOpacity>
+        <View className="absolute inset-0 z-50 items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}>
+          <BlurView tint="dark" intensity={80} className="w-11/12 rounded-3xl overflow-hidden border border-purple-500/30">
+            {/* Header */}
+            <LinearGradient
+              colors={['#4c1d95', '#1e1b4b']}
+              className="px-6 pt-6 pb-4"
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <Ionicons name="create" size={22} color="#c084fc" />
+                  <Text className="text-white font-black text-xl ml-2 tracking-tight">New Discussion</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => { setIsCreating(false); setNewTitle(''); setNewContent(''); }}
+                  className="w-8 h-8 rounded-full bg-white/10 items-center justify-center"
+                >
+                  <Ionicons name="close" size={18} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+
+            {/* Body */}
+            <View className="px-6 py-4">
+              <Text className="text-purple-300 text-xs font-bold uppercase tracking-wider mb-2">Title</Text>
+              <TextInput
+                className="bg-white/5 text-white text-base px-4 py-3 rounded-xl border border-white/10 mb-4 font-medium"
+                placeholder="What's the topic?"
+                placeholderTextColor="#52525b"
+                value={newTitle}
+                onChangeText={setNewTitle}
+              />
+
+              <Text className="text-purple-300 text-xs font-bold uppercase tracking-wider mb-2">Content</Text>
+              <TextInput
+                className="bg-white/5 text-white text-base px-4 py-3 rounded-xl border border-white/10 mb-6 font-medium"
+                style={{ height: 120 }}
+                placeholder="Share your thoughts with the community..."
+                placeholderTextColor="#52525b"
+                value={newContent}
+                onChangeText={setNewContent}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  onPress={() => { setIsCreating(false); setNewTitle(''); setNewContent(''); }}
+                  className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 items-center"
+                >
+                  <Text className="text-zinc-400 font-bold">Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleCreatePost}
+                  disabled={!newTitle || !newContent}
+                  className={`flex-1 py-3 rounded-xl items-center ${!newTitle || !newContent ? 'bg-purple-900/40 border border-purple-700/30' : 'bg-purple-600'}`}
+                >
+                  <LinearGradient
+                    colors={!newTitle || !newContent ? ['#4c1d95', '#4c1d95'] : ['#9333ea', '#7e22ce']}
+                    className="absolute inset-0 rounded-xl"
+                  />
+                  <Text className={`font-bold ${!newTitle || !newContent ? 'text-purple-400' : 'text-white'}`}>Post 🚀</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </BlurView>
         </View>
