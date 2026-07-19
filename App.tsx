@@ -41,7 +41,7 @@ export default function App() {
 
   if (isDesktop) {
     return (
-      <SafeAreaProvider>
+      <SafeAreaProvider style={{ flex: 1 }}>
         <DesktopNotSupported />
         <StatusBar style="light" />
       </SafeAreaProvider>
@@ -49,7 +49,7 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1 }}>
       <AppNavigator />
       <InstallPromptWeb />
       <StatusBar style="light" />
