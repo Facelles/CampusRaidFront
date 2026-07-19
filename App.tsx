@@ -15,17 +15,16 @@ export default function App() {
   const isDesktop = Platform.OS === 'web' && width > 768;
 
   useEffect(() => {
+    let handleInteraction: () => void;
+
     if (soundEnabled && !isDesktop) {
       playBackgroundMusic();
       
-      // Handle web autoplay restrictions
       if (Platform.OS === 'web') {
-        const handleInteraction = () => {
+        handleInteraction = () => {
           if (useAuthStore.getState().soundEnabled) {
              playBackgroundMusic();
           }
-          window.removeEventListener('click', handleInteraction);
-          window.removeEventListener('touchstart', handleInteraction);
         };
         window.addEventListener('click', handleInteraction);
         window.addEventListener('touchstart', handleInteraction);
@@ -36,6 +35,10 @@ export default function App() {
     
     return () => {
       stopBackgroundMusic();
+      if (Platform.OS === 'web' && handleInteraction) {
+        window.removeEventListener('click', handleInteraction);
+        window.removeEventListener('touchstart', handleInteraction);
+      }
     };
   }, [soundEnabled, isDesktop]);
 
