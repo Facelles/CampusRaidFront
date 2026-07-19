@@ -2,9 +2,11 @@ import { Audio } from 'expo-av';
 
 let backgroundMusic: Audio.Sound | null = null;
 let isMusicPlaying = false;
+let isMusicLoading = false;
 
 export const playBackgroundMusic = async () => {
-  if (isMusicPlaying) return;
+  if (isMusicPlaying || isMusicLoading) return;
+  isMusicLoading = true;
   try {
     const { sound } = await Audio.Sound.createAsync(
       { uri: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3' },
@@ -14,6 +16,8 @@ export const playBackgroundMusic = async () => {
     isMusicPlaying = true;
   } catch (error) {
     console.log('Audio disabled or failed (normal for web until user interacts)', error);
+  } finally {
+    isMusicLoading = false;
   }
 };
 
