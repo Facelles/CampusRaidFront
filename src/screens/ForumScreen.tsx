@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput, ActivityIndicator, Alert, ImageBackground, RefreshControl } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import AnimatedVIPBorder from '../components/AnimatedVIPBorder';
 export default function ForumScreen({ navigation }: any) {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
@@ -24,12 +25,14 @@ export default function ForumScreen({ navigation }: any) {
 
   const fetchPosts = async () => {
     try {
-      setLoading(true);
+      if (!posts.length) setLoading(true);
+      setRefreshing(true);
       const res = await apiClient.get('/posts');
       setPosts(res.data);
     } catch (error) {
       console.error(error);
     } finally {
+      setRefreshing(false);
       setLoading(false);
     }
   };
@@ -179,6 +182,8 @@ export default function ForumScreen({ navigation }: any) {
           data={posts}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchPosts} tintColor="#a855f7" />}
+          contentContainerStyle={{ paddingBottom: 150 }}
           showsVerticalScrollIndicator={false}
           className="flex-1"
         />
@@ -227,9 +232,15 @@ export default function ForumScreen({ navigation }: any) {
 
       <TouchableOpacity 
         onPress={() => setIsCreating(true)}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-purple-600 rounded-full items-center justify-center shadow-lg border border-purple-400/30"
+        className="absolute bottom-28 right-6 w-16 h-16 bg-purple-600 rounded-full items-center justify-center shadow-lg shadow-purple-900"
+        style={{ elevation: 10 }}
       >
-        <Ionicons name="add" size={32} color="#fff" />
+        <LinearGradient
+          colors={['#9333ea', '#7e22ce']}
+          className="w-full h-full rounded-full items-center justify-center"
+        >
+          <Ionicons name="add" size={32} color="white" />
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
