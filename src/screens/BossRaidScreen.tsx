@@ -7,6 +7,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { playActionSound, playCriticalHitSound } from '../utils/audio';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function BossRaidScreen() {
   const [boss, setBoss] = useState<any>(null);
@@ -16,6 +17,7 @@ export default function BossRaidScreen() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const universityId = (user as any)?.universityId || (user as any)?.university?.id;
+  const insets = useSafeAreaInsets();
 
   const hpAnim = React.useRef(new Animated.Value(100)).current;
   const shakeAnim = React.useRef(new Animated.Value(0)).current;
@@ -164,7 +166,7 @@ export default function BossRaidScreen() {
         style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
       />
       
-      <View className="px-4 pt-12 pb-4 flex-row justify-between items-end z-10">
+      <View className="px-4 pb-4 flex-row justify-between items-end z-10" style={{ paddingTop: Math.max(insets.top, 48) }}>
         <View>
           <Text className="text-3xl font-black text-white tracking-tight mb-1">Boss Raid</Text>
           <Text className="text-purple-300 text-sm font-medium">{boss?.university?.name || 'Your University'}</Text>
@@ -191,16 +193,18 @@ export default function BossRaidScreen() {
       </View>
 
       <ScrollView className="flex-1 px-4 z-10" showsVerticalScrollIndicator={false}>
-        <View className="items-center mt-2 mb-8 relative">
+        <View className="items-center mt-2 mb-8 relative w-full">
           <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
-          <Animated.View style={bossAnimatedStyle} className="items-center w-full">
-            <View className="w-56 h-56 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
-              <Text style={{ fontSize: 100, lineHeight: 120 }}>👾</Text>
-            </View>
-            <Text className="text-white font-black text-2xl tracking-widest uppercase text-center" style={{ textShadowColor: '#a855f7', textShadowRadius: 10 }}>
-              {boss.name}
-            </Text>
-          </Animated.View>
+          <View className="w-full items-center">
+            <Animated.View style={bossAnimatedStyle} className="items-center">
+              <View className="w-56 h-56 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
+                <Text style={{ fontSize: 100, lineHeight: 120 }}>👾</Text>
+              </View>
+              <Text className="text-white font-black text-2xl tracking-widest uppercase text-center" style={{ textShadowColor: '#a855f7', textShadowRadius: 10 }}>
+                {boss.name}
+              </Text>
+            </Animated.View>
+          </View>
         </View>
 
         <BlurView tint="dark" intensity={60} className="w-full h-8 bg-black/40 rounded-full overflow-hidden mb-2 border border-white/10 relative">
