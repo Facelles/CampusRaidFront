@@ -5,6 +5,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '../store/useAuthStore';
 import apiClient from '../api/client';
+import { useEffect } from 'react';
 
 export default function LoginScreen({ navigation }: any) {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,7 +14,13 @@ export default function LoginScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [universityName, setUniversityName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setUser } = useAuthStore();
+  const { setUser, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigation.replace('Main');
+    }
+  }, [isAuthenticated, navigation]);
 
   const handleAuth = async () => {
     if (!email || !password || (!isLogin && (!name || !universityName))) {
