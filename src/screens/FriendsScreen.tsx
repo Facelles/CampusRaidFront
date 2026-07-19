@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import CryptoJS from 'crypto-js';
 
 export default function FriendsScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
@@ -24,6 +25,16 @@ export default function FriendsScreen({ navigation }: any) {
       
       const chatsMap: Record<string, any> = {};
       chatsRes.data.forEach((chat: any) => {
+        try {
+          if (chat.lastMessage) {
+            const secret = [user.id, chat.id].sort().join('_');
+            const bytes = CryptoJS.AES.decrypt(chat.lastMessage, secret);
+            const originalText = bytes.toString(CryptoJS.enc.Utf8);
+            chat.lastMessage = originalText || chat.lastMessage;
+          }
+        } catch (e) {
+          // Fallback to encrypted text if decryption fails
+        }
         chatsMap[chat.id] = chat;
       });
       setChatData(chatsMap);
