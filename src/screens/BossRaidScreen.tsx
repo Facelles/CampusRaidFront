@@ -271,7 +271,7 @@ export default function BossRaidScreen() {
                     );
                   })}
                 </View>
-              </>
+              </View>
             )}
 
             <TouchableOpacity 
