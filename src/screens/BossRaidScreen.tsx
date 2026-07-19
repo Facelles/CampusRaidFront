@@ -185,15 +185,15 @@ export default function BossRaidScreen() {
       >
         <View className="items-center mt-2 mb-8 relative w-full">
           <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
-          <View className="w-full flex-row justify-center">
-            <Animated.View style={bossAnimatedStyle} className="items-center w-full px-2">
-              <View className="w-40 h-40 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
-                <Text style={{ fontSize: 80, lineHeight: 90 }}>👾</Text>
+          <View className="w-full items-center justify-center overflow-hidden px-4">
+            <Animated.View style={[bossAnimatedStyle, { width: '100%', alignItems: 'center' }]}>
+              <View className="w-32 h-32 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
+                <Text style={{ fontSize: 60, lineHeight: 70 }}>👾</Text>
               </View>
               <Text 
-                className="text-white font-black text-xl tracking-widest uppercase text-center w-full flex-wrap" 
-                style={{ textShadowColor: '#a855f7', textShadowRadius: 10 }}
-                numberOfLines={2}
+                className="text-white font-black text-lg tracking-widest uppercase text-center" 
+                style={{ textShadowColor: '#a855f7', textShadowRadius: 10, width: '100%' }}
+                numberOfLines={3}
                 adjustsFontSizeToFit
               >
                 {boss.name}
