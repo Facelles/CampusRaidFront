@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
@@ -33,6 +34,9 @@ export default function BottomTabNavigator() {
     return () => clearInterval(interval);
   }, [user]);
 
+  const isWeb = Platform.OS === 'web';
+  const bottomInset = isWeb ? 20 : Math.max(insets.bottom, 10);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -40,15 +44,15 @@ export default function BottomTabNavigator() {
         tabBarStyle: { 
           backgroundColor: '#000000', 
           borderTopColor: '#3b0764',
-          position: 'absolute',
+          position: isWeb ? 'fixed' : 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
           elevation: 0,
-          height: 65 + Math.max(insets.bottom, 10),
-          paddingBottom: Math.max(insets.bottom, 10),
+          height: 60 + bottomInset,
+          paddingBottom: bottomInset,
           paddingTop: 10,
-        },
+        } as any,
         tabBarActiveTintColor: '#c084fc',
         tabBarInactiveTintColor: '#52525b',
         tabBarIcon: ({ focused, color, size }) => {
