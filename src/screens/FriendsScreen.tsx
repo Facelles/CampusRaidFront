@@ -9,14 +9,24 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function FriendsScreen({ navigation }: any) {
   const user = useAuthStore((state) => state.user);
   const [friendships, setFriendships] = useState<any[]>([]);
+  const [chatData, setChatData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchFriends = async () => {
     if (!user) return;
     try {
       setLoading(true);
-      const res = await apiClient.get(`/friends/${user.id}`);
-      setFriendships(res.data);
+      const [friendsRes, chatsRes] = await Promise.all([
+        apiClient.get(`/friends/${user.id}`),
+        apiClient.get('/chat/my', { params: { userId: user.id } })
+      ]);
+      setFriendships(friendsRes.data);
+      
+      const chatsMap: Record<string, any> = {};
+      chatsRes.data.forEach((chat: any) => {
+        chatsMap[chat.id] = chat;
+      });
+      setChatData(chatsMap);
     } catch (error) {
       console.error(error);
     } finally {
@@ -27,7 +37,11 @@ export default function FriendsScreen({ navigation }: any) {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', fetchFriends);
     fetchFriends();
-    return unsubscribe;
+    const interval = setInterval(fetchFriends, 5000);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   }, [navigation, user]);
 
   const handleRespond = async (friendshipId: string, status: 'ACCEPTED' | 'REJECTED') => {
@@ -93,10 +107,20 @@ export default function FriendsScreen({ navigation }: any) {
             {partner.titles?.length > 0 && (
                <Text className="text-green-400 text-[10px] uppercase font-bold">{partner.titles[0]}</Text>
             )}
+            {chatData[partner.id]?.lastMessage && (
+               <Text className="text-zinc-500 text-xs mt-1" numberOfLines={1}>
+                 {chatData[partner.id].lastMessage}
+               </Text>
+            )}
           </View>
-          <TouchableOpacity onPress={() => startChat(partner.id, partner.name)} className="bg-blue-600 px-3 py-1.5 rounded-lg flex-row items-center">
+          <TouchableOpacity onPress={() => startChat(partner.id, partner.name)} className="bg-blue-600 px-3 py-1.5 rounded-lg flex-row items-center relative">
             <Ionicons name="chatbubble" size={14} color="#fff" className="mr-1" />
             <Text className="text-white font-bold text-xs ml-1">Message</Text>
+            {chatData[partner.id]?.unreadCount > 0 && (
+              <View className="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 items-center justify-center border-2 border-black">
+                <Text className="text-white text-[10px] font-bold">{chatData[partner.id].unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </BlurView>
       );

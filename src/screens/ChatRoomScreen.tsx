@@ -51,7 +51,7 @@ export default function ChatRoomScreen({ route, navigation }: any) {
       }
     };
     fetchHistory();
-    const interval = setInterval(fetchHistory, 5000);
+    const interval = setInterval(fetchHistory, 2000);
     return () => clearInterval(interval);
   }, [partnerId, user]);
 

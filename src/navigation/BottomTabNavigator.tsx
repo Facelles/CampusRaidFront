@@ -5,10 +5,32 @@ import BossRaidScreen from '../screens/BossRaidScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import FriendsScreen from '../screens/FriendsScreen';
+import { useEffect, useState } from 'react';
+import apiClient from '../api/client';
+import { useAuthStore } from '../store/useAuthStore';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabNavigator() {
+  const user = useAuthStore((state) => state.user);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      if (!user) return;
+      try {
+        const res = await apiClient.get('/chat/my', { params: { userId: user.id } });
+        const totalUnread = res.data.reduce((sum: number, chat: any) => sum + (chat.unreadCount || 0), 0);
+        setUnreadCount(totalUnread);
+      } catch (e) {
+        // silently fail polling
+      }
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -36,7 +58,11 @@ export default function BottomTabNavigator() {
       <Tab.Screen name="Forum" component={ForumScreen} />
       <Tab.Screen name="Boss Raid" component={BossRaidScreen} />
       <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
-      <Tab.Screen name="Friends" component={FriendsScreen} />
+      <Tab.Screen 
+        name="Friends" 
+        component={FriendsScreen} 
+        options={{ tabBarBadge: unreadCount > 0 ? unreadCount : undefined }}
+      />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
