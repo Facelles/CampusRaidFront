@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Animated } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Animated, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useAuthStore';
 import * as Haptics from 'expo-haptics';
@@ -19,6 +19,10 @@ export default function BossRaidScreen() {
   const setUser = useAuthStore((state) => state.setUser);
   const universityId = (user as any)?.universityId || (user as any)?.university?.id;
   const insets = useSafeAreaInsets();
+
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const chatScrollRef = useRef<ScrollView>(null);
 
   const hpAnim = React.useRef(new Animated.Value(100)).current;
   const shakeAnim = React.useRef(new Animated.Value(0)).current;
@@ -74,6 +78,32 @@ export default function BossRaidScreen() {
     fetchBoss();
   }, [universityId]);
 
+  const fetchChat = async (bossId: string) => {
+    try {
+      const res = await apiClient.get(`/raid-chat/${bossId}`);
+      setChatMessages(res.data);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (boss?.id) {
+      fetchChat(boss.id);
+      const interval = setInterval(() => fetchChat(boss.id), 5000);
+      return () => clearInterval(interval);
+    }
+  }, [boss?.id]);
+
+  const sendMessage = async () => {
+    if (!chatInput.trim() || !boss?.id) return;
+    try {
+      await apiClient.post(`/raid-chat/${boss.id}`, { content: chatInput.trim() });
+      setChatInput('');
+      fetchChat(boss.id);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const triggerShake = () => {
     Animated.sequence([
       Animated.timing(shakeAnim, { toValue: -15, duration: 50, useNativeDriver: true }),
@@ -128,17 +158,24 @@ export default function BossRaidScreen() {
         setResultModal({ visible: true, success: true, message: res.data.message });
         
         if (user) {
-          setUser({ ...user, xp: user.xp + 50, coins: user.coins + 10 });
+          setUser({ ...user, xp: user.xp + 50, coins: user.coins + 10, currentStreak: res.data.streak });
         }
         setSelectedBlocks([]);
         fetchBoss();
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         setResultModal({ visible: true, success: false, message: res.data.message });
+        if (user) {
+          setUser({ ...user, currentStreak: 0 });
+        }
         setSelectedBlocks([]);
       }
     } catch (error: any) {
-      setResultModal({ visible: true, success: false, message: error?.response?.data?.message || 'Attack request failed' });
+      if (error?.response?.status === 429) {
+        setResultModal({ visible: true, success: false, message: error.response.data.message });
+      } else {
+        setResultModal({ visible: true, success: false, message: error?.response?.data?.message || 'Attack request failed' });
+      }
     }
   };
 
@@ -173,8 +210,15 @@ export default function BossRaidScreen() {
           <Text className="text-3xl font-black text-white tracking-tight mb-1">Boss Raid</Text>
           <Text className="text-purple-300 text-sm font-medium">{boss?.university?.name || 'Your University'}</Text>
         </View>
-        <View className="bg-white/10 px-3 py-1.5 rounded-full border border-white/5">
-           <Text className="text-white font-bold text-xs uppercase">{boss.status}</Text>
+        <View className="items-end">
+          <View className="bg-white/10 px-3 py-1.5 rounded-full border border-white/5 mb-2">
+             <Text className="text-white font-bold text-xs uppercase">{boss.status}</Text>
+          </View>
+          {(user as any)?.currentStreak > 0 && (
+            <View className="bg-orange-500/20 px-3 py-1 rounded-full border border-orange-500/50 flex-row items-center">
+              <Text className="text-orange-400 font-black text-xs mr-1">🔥 STREAK x{(user as any).currentStreak}</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -316,6 +360,49 @@ export default function BossRaidScreen() {
             ))
           )}
         </BlurView>
+        )}
+
+        {/* Chat Section */}
+        {boss && (
+          <BlurView tint="dark" intensity={50} className="p-5 rounded-3xl border border-white/10 mb-10 overflow-hidden">
+            <View className="flex-row items-center mb-4">
+              <Ionicons name="chatbubbles" size={20} color="#3b82f6" className="mr-2" />
+              <Text className="text-white font-black text-lg">Raid Chat</Text>
+            </View>
+            <View className="h-48 bg-black/30 rounded-xl mb-3 p-3">
+              <ScrollView 
+                ref={chatScrollRef}
+                onContentSizeChange={() => chatScrollRef.current?.scrollToEnd({ animated: true })}
+                showsVerticalScrollIndicator={true}
+              >
+                {chatMessages.length === 0 ? (
+                  <Text className="text-white/40 text-center py-4 font-medium italic">Be the first to say something!</Text>
+                ) : (
+                  chatMessages.map(msg => (
+                    <View key={msg.id} className={`mb-3 ${msg.userId === user?.id ? 'items-end' : 'items-start'}`}>
+                      <Text className="text-white/50 text-[10px] font-bold mb-1 ml-1">{msg.user.name}</Text>
+                      <View className={`px-3 py-2 rounded-2xl max-w-[80%] ${msg.userId === user?.id ? 'bg-blue-600/80 rounded-tr-sm' : 'bg-white/10 rounded-tl-sm'}`}>
+                        <Text className="text-white text-sm leading-5">{msg.content}</Text>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            </View>
+            <View className="flex-row items-center">
+              <TextInput
+                value={chatInput}
+                onChangeText={setChatInput}
+                placeholder="Type a message..."
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                className="flex-1 bg-white/10 text-white px-4 py-3 rounded-full border border-white/10 mr-2"
+                onSubmitEditing={sendMessage}
+              />
+              <TouchableOpacity onPress={sendMessage} className="bg-blue-600 w-12 h-12 rounded-full items-center justify-center">
+                <Ionicons name="send" size={18} color="white" style={{ marginLeft: 2 }} />
+              </TouchableOpacity>
+            </View>
+          </BlurView>
         )}
       </ScrollView>
 
