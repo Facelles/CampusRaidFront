@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,9 +23,14 @@ export default function DesktopNotSupported() {
           Please open this link on your mobile device to join the raid!
         </Text>
         
-        <View style={styles.qrPlaceholder}>
-          <Ionicons name="qr-code-outline" size={100} color="#c084fc" style={{ opacity: 0.5 }} />
-          <Text style={styles.qrText}>Scan on Mobile</Text>
+        <View style={styles.qrContainer}>
+          <View style={styles.qrCodeWrapper}>
+            <Image 
+              source={{ uri: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://campus-raid-front-lemon.vercel.app/&color=000000&bgcolor=ffffff&margin=1' }} 
+              style={{ width: 160, height: 160 }} 
+            />
+          </View>
+          <Text style={styles.qrText}>Scan to open on your phone</Text>
         </View>
       </BlurView>
     </View>
@@ -75,19 +80,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 40,
   },
-  qrPlaceholder: {
+  qrContainer: {
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
     backgroundColor: 'rgba(0,0,0,0.4)',
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(168, 85, 247, 0.2)',
   },
+  qrCodeWrapper: {
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+  },
   qrText: {
     color: '#a855f7',
     fontWeight: 'bold',
-    marginTop: 10,
     textTransform: 'uppercase',
     letterSpacing: 1,
+    fontSize: 12,
   }
 });
