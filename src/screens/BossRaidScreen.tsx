@@ -14,6 +14,7 @@ export default function BossRaidScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedBlocks, setSelectedBlocks] = useState<any[]>([]);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [resultModal, setResultModal] = useState<{ visible: boolean, success: boolean, message: string } | null>(null);
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
   const universityId = (user as any)?.universityId || (user as any)?.university?.id;
@@ -124,19 +125,20 @@ export default function BossRaidScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         if (useAuthStore.getState().soundEnabled) playCriticalHitSound();
         triggerShake();
-        Alert.alert('CRITICAL HIT!', res.data.message);
+        setResultModal({ visible: true, success: true, message: res.data.message });
         
         if (user) {
           setUser({ ...user, xp: user.xp + 50, coins: user.coins + 10 });
         }
+        setSelectedBlocks([]);
         fetchBoss();
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('ATTACK FAILED', res.data.message);
+        setResultModal({ visible: true, success: false, message: res.data.message });
         setSelectedBlocks([]);
       }
     } catch (error: any) {
-      Alert.alert('ERROR', error?.response?.data?.message || 'Attack request failed');
+      setResultModal({ visible: true, success: false, message: error?.response?.data?.message || 'Attack request failed' });
     }
   };
 
@@ -174,22 +176,6 @@ export default function BossRaidScreen() {
         <View className="bg-white/10 px-3 py-1.5 rounded-full border border-white/5">
            <Text className="text-white font-bold text-xs uppercase">{boss.status}</Text>
         </View>
-      </View>
-
-      {/* Language Selector (MVP Placeholder) */}
-      <View className="px-4 mb-4 z-10">
-        <Text className="text-zinc-400 font-bold text-xs uppercase tracking-wider mb-2">Select Language</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-          {['JavaScript', 'Python', 'C++'].map((lang, idx) => (
-            <TouchableOpacity
-              key={lang}
-              onPress={() => Alert.alert('MVP Only', `${lang} support is unavailable in MVP. Currently defaulting to pseudo-code / JS.`)}
-              className={`mr-3 px-4 py-2 rounded-full border ${idx === 0 ? 'bg-purple-600/40 border-purple-400/50' : 'bg-white/5 border-white/10'}`}
-            >
-              <Text className={idx === 0 ? 'text-purple-100 font-bold' : 'text-zinc-400 font-medium'}>{lang}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </View>
 
       <ScrollView className="flex-1 px-4 z-10" showsVerticalScrollIndicator={false}>
@@ -319,8 +305,32 @@ export default function BossRaidScreen() {
           )}
         </BlurView>
         )}
-        
       </ScrollView>
+
+      {resultModal?.visible && (
+        <View className="absolute inset-0 z-50 items-center justify-center bg-black/80 px-6">
+          <BlurView intensity={80} tint="dark" className="p-8 rounded-3xl border border-white/20 items-center w-full max-w-sm">
+            <Ionicons 
+              name={resultModal.success ? "skull" : "warning"} 
+              size={64} 
+              color={resultModal.success ? "#4ade80" : "#ef4444"} 
+              className="mb-4"
+            />
+            <Text className={`text-3xl font-black mb-2 text-center ${resultModal.success ? 'text-green-400' : 'text-red-500'}`}>
+              {resultModal.success ? 'CRITICAL HIT!' : 'ATTACK FAILED'}
+            </Text>
+            <Text className="text-zinc-300 text-center font-medium mb-8 text-lg">
+              {resultModal.message}
+            </Text>
+            <TouchableOpacity 
+              onPress={() => setResultModal(null)}
+              className={`px-8 py-4 rounded-full w-full ${resultModal.success ? 'bg-green-600' : 'bg-red-600'}`}
+            >
+              <Text className="text-white text-center font-bold text-lg">Continue</Text>
+            </TouchableOpacity>
+          </BlurView>
+        </View>
+      )}
     </View>
   );
 }
