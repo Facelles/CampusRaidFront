@@ -163,7 +163,7 @@ export default function ChatRoomScreen({ route, navigation }: any) {
 
       <BlurView tint="dark" intensity={70} className="p-4 border-t border-white/10 flex-row items-center">
         <TextInput
-          className="flex-1 bg-white/10 text-white p-3 rounded-full px-5 font-medium border border-white/5"
+          className="flex-1 bg-white/10 text-white text-base p-3 rounded-full px-5 font-medium border border-white/5"
           placeholder="Type a message..."
           placeholderTextColor="#a1a1aa"
           value={newMessage}

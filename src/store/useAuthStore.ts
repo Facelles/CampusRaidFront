@@ -16,8 +16,10 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  soundEnabled: boolean;
   setUser: (user: User | null) => void;
   logout: () => void;
+  setSoundEnabled: (enabled: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,8 +27,10 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
+      soundEnabled: true,
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       logout: () => set({ user: null, isAuthenticated: false }),
+      setSoundEnabled: (enabled) => set({ soundEnabled: enabled }),
     }),
     {
       name: 'auth-storage',

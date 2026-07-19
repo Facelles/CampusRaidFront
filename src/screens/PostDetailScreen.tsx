@@ -225,7 +225,7 @@ export default function PostDetailScreen({ route, navigation }: any) {
           )}
           <View className="flex-row items-end">
             <TextInput 
-              className={`flex-1 bg-white/10 text-white p-3 px-4 ${replyingTo ? 'rounded-b-xl rounded-tr-xl' : 'rounded-2xl'} border border-white/10 mr-3 max-h-32`}
+              className={`flex-1 bg-white/10 text-white text-base p-3 px-4 ${replyingTo ? 'rounded-b-xl rounded-tr-xl' : 'rounded-2xl'} border border-white/10 mr-3 max-h-32`}
               placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
               placeholderTextColor="#71717a"
               value={newComment}

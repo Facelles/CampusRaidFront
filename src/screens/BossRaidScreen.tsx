@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { playActionSound, playCriticalHitSound } from '../utils/audio';
 
 export default function BossRaidScreen() {
   const [boss, setBoss] = useState<any>(null);
@@ -87,6 +88,7 @@ export default function BossRaidScreen() {
 
   const handleBlockSelect = (block: any) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (useAuthStore.getState().soundEnabled) playActionSound();
     const puzzle = boss?.puzzles?.[0];
     if (puzzle?.type === 'MULTIPLE_CHOICE') {
       setSelectedBlocks([block]);
@@ -99,6 +101,7 @@ export default function BossRaidScreen() {
 
   const handleBlockRemove = (block: any) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (useAuthStore.getState().soundEnabled) playActionSound();
     setSelectedBlocks(selectedBlocks.filter(b => b.id !== block.id));
   };
 
@@ -117,6 +120,7 @@ export default function BossRaidScreen() {
       
       if (res.data.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (useAuthStore.getState().soundEnabled) playCriticalHitSound();
         triggerShake();
         Alert.alert('CRITICAL HIT!', res.data.message);
         
@@ -189,9 +193,9 @@ export default function BossRaidScreen() {
       <ScrollView className="flex-1 px-4 z-10" showsVerticalScrollIndicator={false}>
         <View className="items-center mt-2 mb-8 relative">
           <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
-          <Animated.View style={bossAnimatedStyle} className="items-center">
+          <Animated.View style={bossAnimatedStyle} className="items-center w-full">
             <View className="w-56 h-56 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
-              <Text style={{ fontSize: 100 }}>👾</Text>
+              <Text style={{ fontSize: 100, lineHeight: 120 }}>👾</Text>
             </View>
             <Text className="text-white font-black text-2xl tracking-widest uppercase text-center" style={{ textShadowColor: '#a855f7', textShadowRadius: 10 }}>
               {boss.name}

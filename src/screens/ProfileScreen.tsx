@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator, Alert, Switch } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -9,7 +9,7 @@ import { getVIPType } from '../utils/vip';
 import AnimatedVIPText from '../components/AnimatedVIPText';
 
 export default function ProfileScreen({ navigation }: any) {
-  const { user, setUser, logout } = useAuthStore();
+  const { user, setUser, logout, soundEnabled, setSoundEnabled } = useAuthStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [universities, setUniversities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -92,7 +92,7 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
           </View>
           
-          <View className="flex-row justify-between items-center py-4 px-4">
+          <View className="flex-row justify-between items-center py-4 px-4 border-b border-white/5">
             <View className="flex-row items-center">
               <Ionicons name="school" size={20} color="#a855f7" className="mr-3" />
               <Text className="text-zinc-200 font-bold ml-3">University</Text>
@@ -101,6 +101,19 @@ export default function ProfileScreen({ navigation }: any) {
               <Text className="text-zinc-200 font-medium text-xs mr-2">{(user as any)?.university?.name || 'Select'}</Text>
               <Ionicons name="pencil" size={12} color="#a855f7" />
             </TouchableOpacity>
+          </View>
+          
+          <View className="flex-row justify-between items-center py-4 px-4">
+            <View className="flex-row items-center">
+              <Ionicons name="volume-high" size={20} color="#10b981" className="mr-3" />
+              <Text className="text-zinc-200 font-bold ml-3">Sound Effects & Music</Text>
+            </View>
+            <Switch 
+              value={soundEnabled} 
+              onValueChange={setSoundEnabled} 
+              trackColor={{ false: "#3f3f46", true: "#8b5cf6" }}
+              thumbColor={soundEnabled ? "#ffffff" : "#a1a1aa"}
+            />
           </View>
         </BlurView>
 

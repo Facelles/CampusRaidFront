@@ -190,7 +190,7 @@ export default function ForumScreen({ navigation }: any) {
             <Text className="text-white font-bold text-xl mb-4">Create Discussion</Text>
             
             <TextInput
-              className="bg-black/40 text-white p-4 rounded-xl border border-white/5 mb-3 font-medium"
+              className="bg-black/40 text-white text-base p-4 rounded-xl border border-white/5 mb-3 font-medium"
               placeholder="Title"
               placeholderTextColor="#a1a1aa"
               value={newTitle}
@@ -198,7 +198,7 @@ export default function ForumScreen({ navigation }: any) {
             />
             
             <TextInput
-              className="bg-black/40 text-white p-4 rounded-xl border border-white/5 h-32 mb-6 font-medium"
+              className="bg-black/40 text-white text-base p-4 rounded-xl border border-white/5 h-32 mb-6 font-medium"
               placeholder="What's on your mind?"
               placeholderTextColor="#a1a1aa"
               value={newContent}

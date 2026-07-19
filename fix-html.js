@@ -36,6 +36,9 @@ if (fs.existsSync(indexPath)) {
   // Fix import.meta issue
   html = html.replace('<script src="/_expo', '<script type="module" src="/_expo');
   
+  // Remove existing viewport tag
+  html = html.replace(/<meta name="viewport".*?>/, '');
+  
   // Inject PWA tags into <head>
   const headInjection = `
     <link rel="apple-touch-icon" href="/icon.png">
@@ -43,6 +46,7 @@ if (fs.existsSync(indexPath)) {
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CampusRaid">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   `;
   html = html.replace('</head>', `${headInjection}</head>`);
   
