@@ -185,7 +185,7 @@ export default function BossRaidScreen() {
       >
         <View className="items-center mt-2 mb-8 relative w-full">
           <View className="absolute w-64 h-64 bg-purple-600/30 rounded-full blur-3xl" style={{ top: 20 }} />
-          <View className="w-full items-center">
+          <View className="w-full flex-row justify-center">
             <Animated.View style={bossAnimatedStyle} className="items-center">
               <View className="w-56 h-56 rounded-full border-4 border-purple-500/50 bg-black overflow-hidden justify-center items-center mb-4 shadow-2xl">
                 <Text style={{ fontSize: 100, lineHeight: 120 }}>👾</Text>

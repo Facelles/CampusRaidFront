@@ -35,7 +35,8 @@ export default function BottomTabNavigator() {
   }, [user]);
 
   const isWeb = Platform.OS === 'web';
-  const bottomInset = isWeb ? 20 : Math.max(insets.bottom, 10);
+  // Use minimal padding on web since the user wants the bar exactly at the bottom
+  const bottomInset = isWeb ? 5 : Math.max(insets.bottom, 5);
 
   return (
     <Tab.Navigator
@@ -49,9 +50,9 @@ export default function BottomTabNavigator() {
           left: 0,
           right: 0,
           elevation: 0,
-          height: 60 + bottomInset,
+          height: 55 + bottomInset,
           paddingBottom: bottomInset,
-          paddingTop: 10,
+          paddingTop: 5,
         } as any,
         tabBarActiveTintColor: '#c084fc',
         tabBarInactiveTintColor: '#52525b',
