@@ -14,7 +14,7 @@ export default function LoginScreen({ navigation }: any) {
   const [name, setName] = useState('');
   const [universityName, setUniversityName] = useState('');
   const [loading, setLoading] = useState(false);
-  const { setUser, isAuthenticated } = useAuthStore();
+  const { setUser, setToken, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -35,7 +35,9 @@ export default function LoginScreen({ navigation }: any) {
       
       const res = await apiClient.post(endpoint, payload);
       
-      setUser(res.data);
+      const { token, user } = res.data;
+      setToken(token);
+      setUser(user);
       
       // Navigate to Main (BottomTabNavigator)
       navigation.replace('Main');
