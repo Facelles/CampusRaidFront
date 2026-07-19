@@ -380,7 +380,9 @@ export default function BossRaidScreen() {
                 ) : (
                   chatMessages.map(msg => (
                     <View key={msg.id} className={`mb-3 ${msg.userId === user?.id ? 'items-end' : 'items-start'}`}>
-                      <Text className="text-white/50 text-[10px] font-bold mb-1 ml-1">{msg.user.name}</Text>
+                      <Text className="text-white/50 text-[10px] font-bold mb-1 ml-1">
+                        {msg.user.avatar ? `${msg.user.avatar} ` : ''}{msg.user.name}
+                      </Text>
                       <View className={`px-3 py-2 rounded-2xl max-w-[80%] ${msg.userId === user?.id ? 'bg-blue-600/80 rounded-tr-sm' : 'bg-white/10 rounded-tl-sm'}`}>
                         <Text className="text-white text-sm leading-5">{msg.content}</Text>
                       </View>

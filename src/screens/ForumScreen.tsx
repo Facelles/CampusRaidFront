@@ -124,7 +124,11 @@ export default function ForumScreen({ navigation }: any) {
           <Text className="text-zinc-300/80 mb-3 text-sm leading-5">{item.content}</Text>
           <View className="flex-row justify-between items-center mt-auto">
             <View className="flex-row items-center bg-white/5 px-2 py-1 rounded-full border border-white/10">
-              <Ionicons name="person" size={12} color="#a855f7" />
+              {item.user?.avatar ? (
+                <Text style={{ fontSize: 12 }}>{item.user.avatar}</Text>
+              ) : (
+                <Ionicons name="person" size={12} color="#a855f7" />
+              )}
               {vipType ? (
                 <AnimatedVIPText text={item.user?.name} type={vipType} style={{ fontSize: 12, fontWeight: 'bold', marginLeft: 4, color: '#fff' }} />
               ) : (

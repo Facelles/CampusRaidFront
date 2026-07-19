@@ -55,6 +55,9 @@ export default function LeaderboardScreen() {
         </Text>
         <View className="ml-2">
           <View className="flex-row items-center">
+            {item.avatar ? (
+              <Text className="mr-2" style={{ fontSize: 20 }}>{item.avatar}</Text>
+            ) : null}
             <Text className="text-white font-bold text-base">{item.name}</Text>
           </View>
           <Text className="text-zinc-400 text-xs mt-1">{item.university?.name || 'No University'}</Text>

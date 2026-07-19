@@ -11,6 +11,7 @@ import AnimatedVIPText from '../components/AnimatedVIPText';
 export default function ProfileScreen({ navigation }: any) {
   const { user, setUser, logout, soundEnabled, setSoundEnabled } = useAuthStore();
   const [modalVisible, setModalVisible] = useState(false);
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [universities, setUniversities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -48,6 +49,19 @@ export default function ProfileScreen({ navigation }: any) {
     }
   };
 
+  const selectAvatar = async (emoji: string) => {
+    try {
+      const res = await apiClient.put('/user/avatar', {
+        avatar: emoji
+      });
+      setUser(res.data); // Update user
+      setAvatarModalVisible(false);
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert('Error', err.response?.data?.error || 'Failed to update avatar');
+    }
+  };
+
   return (
 
     <View className="flex-1 bg-black">
@@ -57,9 +71,16 @@ export default function ProfileScreen({ navigation }: any) {
       />
       <ScrollView className="flex-1 px-4 pt-10">
         <View className="items-center mt-8 mb-8">
-          <View className="w-24 h-24 rounded-full bg-purple-900/30 border-2 border-purple-500/50 items-center justify-center mb-4">
-            <Ionicons name="person" size={48} color="#c084fc" />
-          </View>
+          <TouchableOpacity 
+            onPress={() => setAvatarModalVisible(true)}
+            className="w-24 h-24 rounded-full bg-purple-900/30 border-2 border-purple-500/50 items-center justify-center mb-4"
+          >
+            {user?.avatar ? (
+              <Text style={{ fontSize: 48 }}>{user.avatar}</Text>
+            ) : (
+              <Ionicons name="person" size={48} color="#c084fc" />
+            )}
+          </TouchableOpacity>
           {getVIPType(user?.titles) ? (
             <AnimatedVIPText text={user?.name || 'Student'} type={getVIPType(user?.titles)!} style={{ fontSize: 30, fontWeight: '900', color: '#fff' }} />
           ) : (
@@ -151,6 +172,31 @@ export default function ProfileScreen({ navigation }: any) {
                   )}
                 />
               )}
+            </View>
+          </View>
+        </Modal>
+
+        <Modal visible={avatarModalVisible} animationType="slide" transparent={true}>
+          <View className="flex-1 justify-end bg-black/80">
+            <View className="bg-zinc-900 pb-10 pt-5 px-5 rounded-t-3xl border-t border-zinc-800">
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-bold text-zinc-100">Select Avatar</Text>
+                <TouchableOpacity onPress={() => setAvatarModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#a1a1aa" />
+                </TouchableOpacity>
+              </View>
+              
+              <View className="flex-row flex-wrap justify-between">
+                {['👾', '🐱', '🦄', '🚀', '💀', '🤡', '🤖', '👻', '💩', '🐸', '👑', '🔥', '🤓', '👽', '🦊', '🐼'].map(emoji => (
+                  <TouchableOpacity 
+                    key={emoji}
+                    onPress={() => selectAvatar(emoji)}
+                    className="w-16 h-16 items-center justify-center bg-zinc-800 rounded-2xl m-1"
+                  >
+                    <Text style={{ fontSize: 32 }}>{emoji}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
         </Modal>

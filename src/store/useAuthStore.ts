@@ -11,6 +11,9 @@ interface User {
   coins: number;
   titles: string[];
   universityId: string;
+  currentStreak?: number;
+  maxStreak?: number;
+  avatar?: string;
 }
 
 interface AuthState {
